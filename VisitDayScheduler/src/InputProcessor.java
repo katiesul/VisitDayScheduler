@@ -247,6 +247,9 @@ public class InputProcessor {
 			System.out.println();
 			for (int i = 5; i < data.length; i++) {
 				if (!data[i].isEmpty()) { // only add if not a blank preference
+					if (!profNames.contains(data[i])) {
+				          throw new Exception("Error: professor name " + data[i] + " not found.");
+					}
 					temp.add(data[i]);
 				}
 			}
