@@ -290,7 +290,6 @@ public class InputProcessor {
 					if (!profNames.contains(data[i])) {
 				          throw new Exception("Error: professor name " + data[i] + " not found.");
 					}
-					temp.add(nameToProf.get(data[i]));
 				}
 			}
 			ArrayList<Professor> preferences = new ArrayList<>();
