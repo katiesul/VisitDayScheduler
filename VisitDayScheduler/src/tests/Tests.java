@@ -67,14 +67,16 @@ public class Tests {
 //		assertEquals(hasStudent(students, "John D"), true);
 //		assertEquals(hasStudent(students, "Joe E"), true);
 //		assertEquals(hasStudent(students, "Alice V"), true);
-//		for (Student s : students) {
-//			System.out.println(s.getName());
-//			System.out.println(s.getMeetingsAssigned());
-//			System.out.println(s.getNumPreferencesAssigned());
-//			System.out.println();
-//		}
+////		for (Student s : students) {
+////			System.out.println(s.getName());
+////			System.out.println(s.getMeetingsAssigned());
+////			System.out.println(s.getNumPreferencesAssigned());
+////			System.out.println();
+////		}
 //		HashMap<String, Student> nameToStudent = scheduler.getNameToStudent();
 //		HashMap<String, Professor> nameToProf = scheduler.getNameToProf();
+//		ArrayList<Professor> list = nameToStudent.get("Katie S").getPreferences();
+//		assertEquals(list.size(), 5);
 //		assertEquals(nameToStudent.containsKey("Katie S"), true);
 //		assertEquals(nameToStudent.containsKey("Amanda G"), true);
 //		assertEquals(nameToStudent.containsKey("Steve O"), true);
@@ -83,8 +85,8 @@ public class Tests {
 //		assertEquals(nameToStudent.containsKey("Joe E"), true);
 //		assertEquals(nameToStudent.containsKey("Alice V"), true);
 //		
-//		ArrayList<Professor> list = nameToStudent.get("Katie S").getPreferences();
-//		assertEquals(list.size(), 5);
+////		ArrayList<Professor> list = nameToStudent.get("Katie S").getPreferences();
+////		assertEquals(list.size(), 5);
 //		assertEquals(list.get(0).getName(), "Alice Smith");
 //		assertEquals(list.get(1).getName(), "Jane Doe");
 //		assertEquals(list.get(2).getName(), "Amy Brown");

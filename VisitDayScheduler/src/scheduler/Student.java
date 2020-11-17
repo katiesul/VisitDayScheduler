@@ -21,7 +21,7 @@ public class Student {
 		numMeetingsAssigned = 0;
 		preferenceReceived = new ArrayList<>();
 		preferenceReceivedBACKUP = new ArrayList<>();
-
+		
 		int size = preferences.size();
 		for (int i = 0; i < size; i++) {
 			preferenceReceived.add(false);
@@ -31,6 +31,15 @@ public class Student {
 		for (int i = 0; i < numSlots; i++) {
 			schedule.add(null);
 		}
+	}
+	
+	public boolean alreadyMeetingWith(Professor p) {
+		for (Professor prof : schedule) {
+			if (p.equals(prof)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public ArrayList<Professor> getSchedule() {
@@ -74,6 +83,7 @@ public class Student {
 	public void saveState() {
 		numPreferencesAssignedBACKUP = numPreferencesAssigned;
 		numMeetingsAssignedBACKUP = numMeetingsAssigned;
+		preferenceReceivedBACKUP.clear();
 		for (Boolean bool : preferenceReceived) {
 			preferenceReceivedBACKUP.add(bool);
 		}

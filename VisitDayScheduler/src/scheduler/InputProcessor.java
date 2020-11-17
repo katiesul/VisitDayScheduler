@@ -287,9 +287,11 @@ public class InputProcessor {
 			System.out.println(); */
 			for (int i = 5; i < data.length; i++) {
 				if (!data[i].isEmpty()) { // only add if not a blank preference
-					if (!profNames.contains(data[i])) {
-				          throw new Exception("Error: professor name " + data[i] + " not found.");
+					Professor p = nameToProf.get(data[i]);
+					if (p == null) {
+						throw new Exception("Error: professor name " + data[i] + " not found.");
 					}
+					temp.add(p);
 				}
 			}
 			ArrayList<Professor> preferences = new ArrayList<>();
