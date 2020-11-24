@@ -12,7 +12,7 @@ public class Professor {
 	private ArrayList<String> availability;
 	private int numMeetings; // number of meetings they are currently assigned to have
 	private ArrayList<Integer> freeSlots; // contains indices of free slots
-	
+
 	private ArrayList<String> originalAvailability;
 
 	public Professor(String name, ArrayList<String> availability, ArrayList<Integer> freeSlots) {
@@ -52,7 +52,7 @@ public class Professor {
 //		}
 //		System.out.println(getFreeSlots());
 	}
-	
+
 	public ArrayList<String> getOriginalAvailability() {
 		return originalAvailability;
 	}
@@ -78,30 +78,35 @@ public class Professor {
 			student.addToSchedule(this, index);
 			if (studentPrefIndex != -1) {
 				student.setPreferenceReceived(studentPrefIndex, true);
+				student.setNumPreferencesAssigned(student.getNumPreferencesAssigned() + 1);
 			}
-			student.setNumPreferencesAssigned(student.getNumPreferencesAssigned() + 1);
 			student.setMeetingsAssigned(student.getMeetingsAssigned() + 1); // increment student's number of meetings
 		}
 	}
 
 	// INDEX IS ACTUAL INDEX OUT OF ALL INDICES
 	public void removeMeeting(int index, Student student) {
-		// TODO: double check this, may not always be the case they were available then
-		availability.set(index, "AVAILABLE");
-		numMeetings--;
-		if (student != null) {
-			int studentPrefIndex = student.getNumPreference(this);
-			if (studentPrefIndex != -1) {
-				// student is now not assigned this preference
-				student.setPreferenceReceived(studentPrefIndex, false);
-				student.setNumPreferencesAssigned(student.getNumPreferencesAssigned() - 1);
-			}
-			student.setMeetingsAssigned(student.getMeetingsAssigned() - 1);
-			student.removeFromSchedule(index);
+		// indicates there was no meeting at this slot to begin with
+		if (student == null) {
+			return;
 		}
+		numMeetings--;
+		int studentPrefIndex = student.getNumPreference(this);
+		if (studentPrefIndex != -1) {
+			// student is now not assigned this preference
+			student.setPreferenceReceived(studentPrefIndex, false);
+			student.setNumPreferencesAssigned(student.getNumPreferencesAssigned() - 1);
+		}
+		student.setMeetingsAssigned(student.getMeetingsAssigned() - 1);
+		student.removeFromSchedule(index);
 		// TODO: also double check this
-		if (originalAvailability.get(index).equals("AVAILABLE") && !freeSlots.contains(index)) {
-			freeSlots.add(index);
+		if (originalAvailability.get(index).equals("AVAILABLE")) {
+			availability.set(index, "AVAILABLE");
+			if (!freeSlots.contains(index)) {
+				freeSlots.add(index);
+			}
+		} else {
+			availability.set(index, "UNAVAILABLE");
 		}
 	}
 

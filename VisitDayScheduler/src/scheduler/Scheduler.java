@@ -14,6 +14,8 @@ import java.util.Random;
  * 
  * @author Katherine Sullivan
  */
+
+//TODO: TOURS?
 public class Scheduler {
 	private static final int MAX_PROFESSOR_MEETINGS = 10;
 	private static final int MIN_STUDENT_MEETINGS = 5;
@@ -228,7 +230,7 @@ public class Scheduler {
 					i++;
 				}
 				if (str.length() > 1) {
-					writer.write(str.substring(0, str.length()-2) + "\n");
+					writer.write(str.substring(0, str.length() - 2) + "\n");
 				}
 			}
 			writer.close();
@@ -263,7 +265,6 @@ public class Scheduler {
 		// randomly decide whether to switch from students' or professors' perspective
 		Random rand = new Random(System.currentTimeMillis());
 		int studentsOrProfessors = rand.nextInt() % 2;
-		// TODO: IMPLEMENT BELOW
 		if (studentsOrProfessors == 0) {
 			// randomly select two distinct students
 			Student randomStudent1 = students.get(rand.nextInt(students.size() - 1 - 0) + 0);
@@ -273,20 +274,62 @@ public class Scheduler {
 			}
 			// randomly select timeslots
 			int student1RandomSlot = rand.nextInt(randomStudent1.getSchedule().size() - 1 - 0) + 0;
-//			if (!randomStudent1.scheduleEmpty()) {
-//				while (randomStudent1.getSchedule().get(student1RandomSlot) != null) {
-//					student1RandomSlot = rand.nextInt(randomStudent1.getSchedule().size() - 1 - 0) + 0;
-//				}
-//			}
+
 			int student2RandomSlot = rand.nextInt(randomStudent2.getSchedule().size() - 1 - 0) + 0;
-//			if (!randomStudent2.scheduleEmpty()) {
-//				while (randomStudent2.getSchedule().get(student1RandomSlot) != null) {
-//					student2RandomSlot = rand.nextInt(randomStudent2.getSchedule().size() - 1 - 0) + 0;
-//				}
-//			}
+			Professor prof1 = randomStudent1.getSchedule().get(student1RandomSlot);
+			Professor prof2 = randomStudent2.getSchedule().get(student2RandomSlot);
+			if (prof1 != null) {
+				prof1.removeMeeting(student1RandomSlot, randomStudent1);
+				prof1.setMeeting(student2RandomSlot, randomStudent2, randomStudent2.getNumPreference(prof1));
+			}
+			if (prof2 != null) {
+				prof2.removeMeeting(student2RandomSlot, randomStudent2);
+				prof2.setMeeting(student1RandomSlot, randomStudent1, randomStudent1.getNumPreference(prof2));
+			}
+
+			// calculate potential penalty
+			// first calculate if professors are meeting with the same student > 1 time
+			int penalty = 0;
+			if (prof1 != null) {
+				int count = 0;
+				for (String str : prof1.getAvailability()) {
+					if (str.equals(randomStudent2.getName())) {
+						count++;
+					}
+				}
+				if (count > 1) {
+					penalty += MEETING_WITH_SAME_PERSON_PENALTY;
+				}
+			}
+			if (prof2 != null) {
+				int count = 0;
+				for (String str : prof2.getAvailability()) {
+					if (str.equals(randomStudent1.getName())) {
+						count++;
+					}
+				}
+				if (count > 1) {
+					penalty += MEETING_WITH_SAME_PERSON_PENALTY;
+				}
+			}
+			// now calculate if the professors were not available at that time
+			if (prof1 != null) {
+				if (prof1.getOriginalAvailability().get(student2RandomSlot).equals("UNAVAILABLE")) {
+					penalty += NOT_AVAILABLE_THEN_PENALTY;
+				}
+			}
+			if (prof2 != null) {
+				if (prof2.getOriginalAvailability().get(student1RandomSlot).equals("UNAVAILABLE")) {
+					penalty += NOT_AVAILABLE_THEN_PENALTY;
+				}
+			}
+
+			calculateCurrentSatisfaction(penalty);
 		} else {
 			// randomly select two distinct professors
+			rand = new Random(System.currentTimeMillis());
 			Professor randomProf1 = professors.get(rand.nextInt(professors.size() - 1 - 0) + 0);
+			rand = new Random(System.currentTimeMillis());
 			Professor randomProf2 = professors.get(rand.nextInt(professors.size() - 1 - 0) + 0);
 			while (randomProf1.equals(randomProf2)) {
 				randomProf2 = professors.get(rand.nextInt(professors.size() - 1 - 0) + 0);
@@ -295,7 +338,9 @@ public class Scheduler {
 			int prof1Slot = rand.nextInt(randomProf1.getAvailability().size() - 1 - 0) + 0;
 			int prof2Slot = rand.nextInt(randomProf2.getAvailability().size() - 1 - 0) + 0; // make the switch
 			Student prof1OldStudent = nameToStudent.get(randomProf1.getAvailability().get(prof1Slot));
+//			System.out.println("name: " + randomProf1.getAvailability().get(prof1Slot) + " result: " + prof1OldStudent);
 			Student prof2OldStudent = nameToStudent.get(randomProf2.getAvailability().get(prof2Slot));
+//			System.out.println("name: " + randomProf2.getAvailability().get(prof2Slot) + " result: " + prof2OldStudent + "\n");
 			randomProf1.removeMeeting(prof1Slot, prof1OldStudent);
 			randomProf2.removeMeeting(prof2Slot, prof2OldStudent);
 			int prof1OldStudentPref = -1, prof2OldStudentPref = -1;
@@ -360,17 +405,33 @@ public class Scheduler {
 
 			// randomly try a neighboring state
 			randomMove();
+
+			/***********************/
+			/* SIMULATED ANNEALING */
+			/***********************/
+
 			if (currSatisfaction < prevSatisfaction) {
-				// unaccepted; reset to previous state
-				for (Student s : students) {
-					s.restoreState();
+				double percentDecrease = 1 - ((prevSatisfaction - currSatisfaction) / prevSatisfaction);
+				double chanceAccepted = (1 - percentDecrease) / 2;
+				Random rand = new Random(System.currentTimeMillis());
+				int randomNum = rand.nextInt(99) + 0;
+				if (randomNum / 10 <= chanceAccepted) {
+					// accepted
+					noImprovements = 0;
+				} else {
+
+					// unaccepted; reset to previous state
+					for (Student s : students) {
+						s.restoreState();
+					}
+					for (Professor p : professors) {
+						p.restoreState();
+					}
+					currSatisfaction = prevSatisfaction;
 				}
-				for (Professor p : professors) {
-					p.restoreState();
-				}
-				currSatisfaction = prevSatisfaction;
+
 			} else {
-				System.out.println("Switch made");
+//				System.out.println("Switch made");
 				// reset counter
 				noImprovements = 0;
 			}
@@ -409,6 +470,21 @@ public class Scheduler {
 		return currSatisfaction;
 	}
 
+	public static int getRandomIndex(Student s, Professor p) {
+		ArrayList<Integer> bothAreFree = new ArrayList<>();
+		for (int i = 0; i < numSlots; i++) {
+			if (p.getAvailability().get(i).equals("AVAILABLE") && s.getSchedule().get(i) == null) {
+				bothAreFree.add(i);
+			}
+		}
+		if (bothAreFree.size() == 0) {
+			return -1;
+		} else {
+			Random rand = new Random(System.currentTimeMillis());
+			return bothAreFree.get(rand.nextInt((bothAreFree.size() - 1 - 0) + 1) + 0);
+		}
+	}
+
 	public static void createInitialSchedule() {
 		ArrayList<Student> primaryStudents = new ArrayList<>(students);
 		ArrayList<Student> secondary = new ArrayList<>();
@@ -419,16 +495,22 @@ public class Scheduler {
 			for (Student student : primaryStudents) {
 				if (i < student.getPreferences().size() && student.getPreferences().get(i).getFreeSlots().size() > 0
 						&& student.getPreferences().get(i).getNumMeetings() < MAX_PROFESSOR_MEETINGS) {
-					int len = student.getPreferences().get(i).getFreeSlots().size();
 					Professor currProf = student.getPreferences().get(i);
-					Random rand = new Random(System.currentTimeMillis());
 
 					// randomly pick an available meeting slot and assign it
-					int randomNum = rand.nextInt((len - 1 - 0) + 1) + 0;
-					currProf.setMeeting(currProf.getFreeSlots().get(randomNum), student, i);
-					tempSecondary.add(student);
+					int theIndex = getRandomIndex(student, currProf);
+					if (theIndex == -1) {
+						// student didn't get this preference; add to priority
+						if (i < student.getPreferences().size()) {
+							tempPrimary.add(student);
+						}
+					} else {
+						currProf.setMeeting(theIndex, student, i);
+						tempSecondary.add(student);
+					}
 				} else {
-					// student didn't get this preference; add to priority
+					// student didn't get this preference; add to priority, but only if they still
+					// have more preferences to go
 					if (i < student.getPreferences().size()) {
 						tempPrimary.add(student);
 					}
@@ -437,14 +519,19 @@ public class Scheduler {
 			for (Student student : secondary) {
 				if (i < student.getPreferences().size() && student.getPreferences().get(i).getFreeSlots().size() > 0
 						&& student.getPreferences().get(i).getNumMeetings() < MAX_PROFESSOR_MEETINGS) {
-					int len = student.getPreferences().get(i).getFreeSlots().size();
 					Professor currProf = student.getPreferences().get(i);
-					Random rand = new Random(System.currentTimeMillis());
 
 					// randomly pick an available meeting slot and assign it
-					int randomNum = rand.nextInt((len - 1 - 0) + 1) + 0;
-					currProf.setMeeting(currProf.getFreeSlots().get(randomNum), student, i);
-					tempSecondary.add(student);
+					int theIndex = getRandomIndex(student, currProf);
+					if (theIndex == -1) {
+						// student didn't get this preference; add to priority
+						if (i < student.getPreferences().size()) {
+							tempPrimary.add(student);
+						}
+					} else {
+						currProf.setMeeting(theIndex, student, i);
+						tempSecondary.add(student);
+					}
 				} else {
 					// student didn't get this preference; add to priority
 					if (i < student.getPreferences().size()) {
@@ -465,9 +552,11 @@ public class Scheduler {
 				secondary.add(s);
 			}
 			Collections.shuffle(primaryStudents);
-			Collections.shuffle(tempSecondary);
+			Collections.shuffle(secondary);
 			tempPrimary.clear();
 			tempSecondary.clear();
+
+//			printSchedule();
 		}
 
 		/*******************************************************************/
@@ -488,7 +577,6 @@ public class Scheduler {
 			}
 		}
 
-		// TODO: CHECK THEY AREN'T MEETING WITH THEM ALREADY.
 		int k = 0;
 		while (needMoreMeetings.size() > 0 && hasMoreSlots.size() > 0 && k < 1000) {
 			// randomly select a student

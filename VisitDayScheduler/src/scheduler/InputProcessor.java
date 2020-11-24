@@ -74,6 +74,8 @@ public class InputProcessor {
 	public int getNumSlots() {
 		return numSlots;
 	}
+	
+	// TODO: implement students not having any preference 
 
 	/*
 	 * Used to actually process and store professor availability after the
