@@ -19,6 +19,7 @@ import java.util.Random;
 public class Scheduler {
 	private static final int MAX_PROFESSOR_MEETINGS = 10;
 	private static final int MIN_STUDENT_MEETINGS = 5;
+	// TODO: PLAY WITH RNA_MAX AND CYCLES CONSTANTS BELOW.
 	private static final int RNA_MAX = 10;
 	private static final int CYCLES = 10;
 	private static final int MEETING_WITH_SAME_PERSON_PENALTY = 5;
@@ -41,6 +42,11 @@ public class Scheduler {
 
 	public static void main(String[] args) {
 		// TODO: change command line arguments to be user inputs
+		if (args.length > 0) {
+			processCommandLineArgs(args);
+		} else {
+
+		}
 		File studentFile, profFile, schedule;
 		if (args.length != 2 && args.length != 3) {
 			System.out.println("Provide 2 arguments (filename of student preferences and filename of "
@@ -99,7 +105,7 @@ public class Scheduler {
 		calculateCurrentSatisfaction(0);
 
 		if (currSatisfaction == maxSatisfaction) {
-			System.out.println("DONE.");
+//			System.out.println("DONE.");
 		} else {
 			int numCycles = 0;
 			while (numCycles < CYCLES) {
@@ -110,6 +116,10 @@ public class Scheduler {
 
 //		printSchedule();
 		outputResults();
+	}
+
+	public static void processCommandLineArgs(String[] args) {
+
 	}
 
 	public static void printSchedule() {
@@ -151,9 +161,11 @@ public class Scheduler {
 	}
 
 	public static void outputResults() {
+		Random rand = new Random(System.currentTimeMillis());
+		int randomNum = rand.nextInt(5000);
 		PrintWriter writer;
 		try {
-			writer = new PrintWriter("StudentSchedule.tsv", "UTF-8");
+			writer = new PrintWriter(randomNum + "StudentSchedule.tsv", "UTF-8");
 			writer.print("\t");
 			for (int i = 0; i < numSlots; i++) {
 				writer.print(indexToSlot.get(i));
@@ -181,7 +193,7 @@ public class Scheduler {
 		}
 
 		try {
-			writer = new PrintWriter("ProfessorSchedule.tsv", "UTF-8");
+			writer = new PrintWriter(randomNum + "ProfessorSchedule.tsv", "UTF-8");
 			writer.print("\t");
 			for (int i = 0; i < numSlots; i++) {
 				writer.print(indexToSlot.get(i));
@@ -210,9 +222,14 @@ public class Scheduler {
 			e.printStackTrace();
 		}
 
+		// TODO: ask Tom if he randomly assigned people stuff if they didn't have many
+		// meetings. like weren't on prefs.
+
 		boolean atLeastOneStudentPrinted = false;
+
+		// TODO: print (1) (2) etc. for what # pref they didn't get
 		try {
-			writer = new PrintWriter("UnreceivedStudentPreferences.txt", "UTF-8");
+			writer = new PrintWriter(randomNum + "UnreceivedStudentPreferences.txt", "UTF-8");
 			for (Student s : students) {
 				boolean flag = false;
 				int i = 0;
@@ -239,12 +256,14 @@ public class Scheduler {
 			e.printStackTrace();
 		}
 
-		System.out.println("Student schedule written to StudentSchedule.tsv.");
-		System.out.println("Professor schedule written to ProfessorSchedule.tsv.");
+		System.out.println("Student schedule written to " + randomNum + "StudentSchedule.tsv.");
+		System.out.println("Professor schedule written to " + randomNum + "ProfessorSchedule.tsv.");
 		if (atLeastOneStudentPrinted) {
 			System.out.println(
-					"Students and the preferences they did not receive written to UnreceivedStudentPreferences.txt");
+					"Students and the preferences they did not receive written to " + randomNum + "UnreceivedStudentPreferences.txt");
 		}
+		
+		System.out.println();
 	}
 
 	public static void calculateMaxSatisfaction() {
