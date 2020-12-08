@@ -2,12 +2,15 @@ package scheduler;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Scanner;
 
 /**
  * Schedules the student-professor visit day meetings.
@@ -17,11 +20,13 @@ import java.util.Random;
 
 //TODO: TOURS?
 public class Scheduler {
+
+	// TODO: test if you need to do \\ when doing the scanner input.
 	private static final int MAX_PROFESSOR_MEETINGS = 10;
 	private static final int MIN_STUDENT_MEETINGS = 5;
 	// TODO: PLAY WITH RNA_MAX AND CYCLES CONSTANTS BELOW.
-	private static final int RNA_MAX = 10;
-	private static final int CYCLES = 10;
+	private static final int RNA_MAX = 25;
+	private static final int CYCLES = 25;
 	private static final int MEETING_WITH_SAME_PERSON_PENALTY = 5;
 	private static final int NOT_AVAILABLE_THEN_PENALTY = 10;
 	private static HashMap<Integer, String> indexToSlot;
@@ -41,48 +46,11 @@ public class Scheduler {
 	private static HashMap<String, Professor> nameToProf;
 
 	public static void main(String[] args) {
-		// TODO: change command line arguments to be user inputs
+		InputProcessor processor;
 		if (args.length > 0) {
-			processCommandLineArgs(args);
+			processor = processCommandLineArgs(args);
 		} else {
-
-		}
-		File studentFile, profFile, schedule;
-		if (args.length != 2 && args.length != 3) {
-			System.out.println("Provide 2 arguments (filename of student preferences and filename of "
-					+ "professor availability) or 3 arguments (filename of student preferences, filename "
-					+ "of professor availability, and filename of existing schedule");
-			return;
-		}
-
-		try {
-			studentFile = new File(args[0]);
-		} catch (Exception e) {
-			System.out.println("Error opening the students file. Please place the students file in the same directory "
-					+ "as the Java program and check your spelling.");
-			return;
-		}
-		try {
-			profFile = new File(args[1]);
-		} catch (Exception e) {
-			System.out.println("Error opening the professors file. Please place the professors file in the same "
-					+ "directory as the Java program and check your spelling.");
-			return;
-		}
-
-		InputProcessor processor = new InputProcessor();
-
-		if (args.length == 3) {
-			try {
-				schedule = new File(args[2]);
-				processor.processThreeInputs(studentFile, profFile, schedule);
-			} catch (Exception e) {
-				System.out.println("Error opening the schedule file. Please place the schedule file in the same "
-						+ "directory as the Java program and check your spelling.");
-				return;
-			}
-		} else {
-			processor.processTwoInputs(studentFile, profFile);
+			processor = processPromptedInput();
 		}
 
 		// populate data structures
@@ -116,10 +84,169 @@ public class Scheduler {
 
 //		printSchedule();
 		outputResults();
+		System.out.println(currSatisfaction);
 	}
 
-	public static void processCommandLineArgs(String[] args) {
+	public static InputProcessor processPromptedInput() {
+		// TODO: check null?
+		File studentFile = null, profFile = null, prevStudentSchedule = null, prevProfessorSchedule = null;
+		ArrayList<File> tourFiles = new ArrayList<>();
+		Scanner scanner = new Scanner(System.in);
+		Boolean prevSchedule = false;
 
+		// load student preferences file
+		System.out.println("Please type the full filepath of student preferences file, then press enter: ");
+		String studentFilename = scanner.nextLine();
+		try {
+			studentFile = new File(studentFilename);
+		} catch (Exception e) {
+			System.out.println("Error opening the students file. Please enter the full filepath and check spelling.");
+			System.exit(1); // terminate program
+		}
+
+		// load professor availability file
+		System.out.println("Please type the full filepath of professor availability file, then press enter: ");
+		String profFilename = scanner.nextLine();
+		try {
+			profFile = new File(profFilename);
+		} catch (Exception e) {
+			System.out.println("Error opening the professors file. Please enter the full filepath and check spelling.");
+			System.exit(1); // terminate program
+		}
+
+		// load previous student/professor schedule if any
+		System.out.println("Are you loading a previous schedule? If so, type Y and then press enter: ");
+		String response = scanner.nextLine();
+		if (response.toUpperCase().equals("Y")) { // accept "Y" and "y"
+			System.out
+					.println("Please type the full filepath of the previous STUDENT schedule file, then press enter:");
+			String prevStudentScheduleFile = scanner.nextLine();
+			try {
+				prevStudentSchedule = new File(prevStudentScheduleFile);
+			} catch (Exception e) {
+				System.out.println(
+						"Error opening the previous student schedule file. Please enter the full filepath and check spelling.");
+				System.exit(1); // terminate program
+			}
+			System.out.println(
+					"Please type the full filepath of the previous PROFESSOR schedule file, then press enter:");
+			String prevProfScheduleFile = scanner.nextLine();
+			try {
+				prevProfessorSchedule = new File(prevProfScheduleFile);
+			} catch (Exception e) {
+				System.out.println(
+						"Error opening the previous professor schedule file. Please enter the full filepath and check spelling.");
+				System.exit(1); // terminate program
+			}
+			prevSchedule = true;
+		}
+
+		System.out.println("Do you have any tour files to add? If so, type Y :");
+		String response2 = scanner.nextLine();
+		if (response2.toUpperCase().equals("Y")) { // accept "Y" and "y"
+			int count = 1;
+			while (true) {
+				File currTourFile;
+				System.out.println("Please enter the full filename of tour file #" + count + ":");
+				String currTourFilename = scanner.nextLine();
+				try {
+					currTourFile = new File(currTourFilename);
+					tourFiles.add(currTourFile);
+				} catch (Exception e) {
+					System.out.println("Error opening tour file #" + count
+							+ ". Please enter the full filepath and check spelling.");
+					System.exit(1); // terminate program
+				}
+				count++;
+			}
+		}
+
+		InputProcessor processor = new InputProcessor();
+
+		// first process the professor and student information
+		processor.processTwoInputs(studentFile, profFile);
+
+		if (prevSchedule) {
+			try {
+				processor.processPreviousSchedule(prevStudentSchedule, prevProfessorSchedule);
+			} catch (Exception e) {
+				System.out.println("Error in processing previous schedule files.");
+				System.exit(1); // terminate program
+			}
+		}
+		if (tourFiles.size() > 0) {
+			try {
+				processor.processTourFiles(tourFiles);
+			} catch (Exception e) {
+				System.out.println("Error in processing tour files.");
+				System.exit(1); // terminate program
+			}
+		}
+
+		return processor;
+	}
+
+	// TODO: take into account student availability when assigning meetings
+
+	/*
+	 * 2 modes supported using command line arguments: only entering
+	 * professor/student info; entering professor/student info as well as student
+	 * tour files
+	 */
+	public static InputProcessor processCommandLineArgs(String[] args) {
+		File studentFile = null, profFile = null;
+		ArrayList<File> tourFiles = new ArrayList<>();
+		if (args.length < 2) {
+			System.out.println("Provide 2 arguments (filepath of student preferences and filepath of "
+					+ "professor availability) or more (filepath of student preferences, filepath of professor availability, and "
+					+ "filepath of any tour information files");
+			System.exit(1); // terminate program
+		}
+
+		try {
+			studentFile = new File(args[0]);
+		} catch (Exception e) {
+			System.out.println("Error opening the students file. Please enter the full filepath and check spelling.");
+			System.exit(1); // terminate program
+		}
+		try {
+			profFile = new File(args[1]);
+		} catch (Exception e) {
+			System.out.println("Error opening the professors file. Please enter the full filepath and check spelling.");
+			System.exit(1); // terminate program
+		}
+
+		// TODO: see if we can output a colored cell instead of AVAILABLE
+
+		InputProcessor processor = new InputProcessor();
+
+		// first process the professor and student information
+		processor.processTwoInputs(studentFile, profFile);
+
+		// process tour files, if any
+		int count = 1;
+		if (args.length > 2) {
+			int i = 2; // start at 3rd command line argument (first tour filepath)
+			while (i < args.length) {
+				try {
+					File tourFile = new File(args[i]);
+					tourFiles.add(tourFile);
+				} catch (Exception e) {
+					System.out.println("Error opening tour file #" + count
+							+ ". Please enter the full filepath and check spelling.");
+					System.exit(1); // terminate program
+				}
+				count++;
+			}
+			try {
+				processor.processTourFiles(tourFiles);
+			} catch (Exception e) {
+				System.out.println("Error in processing tour files.");
+				System.exit(1); // terminate program
+			}
+		}
+
+		return processor;
 	}
 
 	public static void printSchedule() {
@@ -134,9 +261,9 @@ public class Scheduler {
 		System.out.println();
 		for (Student s : students) {
 			System.out.print(s.getName());
-			for (Professor p : s.getSchedule()) {
-				if (p != null) {
-					System.out.print("\t" + p.getName());
+			for (String str : s.getSchedule()) {
+				if (str != null) {
+					System.out.print("\t" + str);
 				} else {
 					System.out.print("\t----------");
 				}
@@ -176,9 +303,9 @@ public class Scheduler {
 			writer.println();
 			for (Student s : students) {
 				writer.print(s.getName());
-				for (Professor p : s.getSchedule()) {
-					if (p != null) {
-						writer.print("\t" + p.getName());
+				for (String str : s.getSchedule()) {
+					if (str != null) {
+						writer.print("\t" + str);
 					} else {
 						writer.print("\t----------");
 					}
@@ -205,8 +332,6 @@ public class Scheduler {
 			for (Professor p : professors) {
 				writer.print(p.getName());
 				for (String str : p.getAvailability()) {
-					// TODO: check with Tom and ask if it would be helpful to output AVAILABLE so he
-					// knows their free slots
 					if (!str.equals("UNAVAILABLE")) {
 						writer.print("\t" + str);
 					} else {
@@ -242,7 +367,7 @@ public class Scheduler {
 							writer.print(s.getName() + ": ");
 							flag = true;
 						}
-						str += s.getPreferences().get(i).getName() + ", ";
+						str += s.getPreferences().get(i).getName() + " (" + i + "), ";
 					}
 					i++;
 				}
@@ -259,10 +384,10 @@ public class Scheduler {
 		System.out.println("Student schedule written to " + randomNum + "StudentSchedule.tsv.");
 		System.out.println("Professor schedule written to " + randomNum + "ProfessorSchedule.tsv.");
 		if (atLeastOneStudentPrinted) {
-			System.out.println(
-					"Students and the preferences they did not receive written to " + randomNum + "UnreceivedStudentPreferences.txt");
+			System.out.println("Students and the preferences they did not receive written to " + randomNum
+					+ "UnreceivedStudentPreferences.txt");
 		}
-		
+
 		System.out.println();
 	}
 
@@ -295,8 +420,8 @@ public class Scheduler {
 			int student1RandomSlot = rand.nextInt(randomStudent1.getSchedule().size() - 1 - 0) + 0;
 
 			int student2RandomSlot = rand.nextInt(randomStudent2.getSchedule().size() - 1 - 0) + 0;
-			Professor prof1 = randomStudent1.getSchedule().get(student1RandomSlot);
-			Professor prof2 = randomStudent2.getSchedule().get(student2RandomSlot);
+			Professor prof1 = nameToProf.get(randomStudent1.getSchedule().get(student1RandomSlot));
+			Professor prof2 = nameToProf.get(randomStudent2.getSchedule().get(student2RandomSlot));
 			if (prof1 != null) {
 				prof1.removeMeeting(student1RandomSlot, randomStudent1);
 				prof1.setMeeting(student2RandomSlot, randomStudent2, randomStudent2.getNumPreference(prof1));
@@ -430,6 +555,7 @@ public class Scheduler {
 			/***********************/
 
 			if (currSatisfaction < prevSatisfaction) {
+				// TODO: prevent division by 0
 				double percentDecrease = 1 - ((prevSatisfaction - currSatisfaction) / prevSatisfaction);
 				double chanceAccepted = (1 - percentDecrease) / 2;
 				Random rand = new Random(System.currentTimeMillis());
@@ -492,7 +618,7 @@ public class Scheduler {
 	public static int getRandomIndex(Student s, Professor p) {
 		ArrayList<Integer> bothAreFree = new ArrayList<>();
 		for (int i = 0; i < numSlots; i++) {
-			if (p.getAvailability().get(i).equals("AVAILABLE") && s.getSchedule().get(i) == null) {
+			if (p.getAvailability().get(i).equals("AVAILABLE") && s.getSchedule().get(i).equals("AVAILABLE")) {
 				bothAreFree.add(i);
 			}
 		}
@@ -625,8 +751,9 @@ public class Scheduler {
 				boolean remove = true;
 				for (Student stu : students) {
 					int i = 0;
-					for (Professor prof : stu.getSchedule()) {
-						if (prof == null && p.getAvailability().get(i).equals("AVAILABLE")
+					for (String str : stu.getSchedule()) {
+						// see if it's possible for a student to have a meeting with the current prof
+						if (str.equals("AVAILABLE") && p.getAvailability().get(i).equals("AVAILABLE")
 								&& !stu.alreadyMeetingWith(p)) {
 							remove = false;
 							break;
@@ -641,6 +768,78 @@ public class Scheduler {
 
 			k++;
 		}
+	}
+
+	// TODO: fix
+	/*
+	 * Ensures that the schedule is valid (professor and student meetings match up;
+	 * nobody meets with the same person twice; nobody is scheduled when they are
+	 * not available).
+	 */
+	public boolean verifySchedule() {
+		for (Student s : students) {
+			HashSet<Professor> professorsMetWith = new HashSet<>();
+			ArrayList<String> originalAvailability = s.getOriginalAvailability();
+			for (int i = 0; i < originalAvailability.size(); i++) {
+				if (!originalAvailability.get(i).equals("AVAILABLE")) { // tour
+					if (!s.getSchedule().get(i).equals(originalAvailability.get(i))) {
+						System.out.println("INVALID: Student " + s.getName() + " not scheduled to take their tour.");
+						return false;
+					}
+				} else if (!s.getSchedule().get(i).equals("AVAILABLE")) { // student should be scheduled with a
+																			// professor
+					if (nameToProf.get(s.getSchedule().get(i)) == null) {
+						System.out.println("INVALID: Invalid professor name or given a tour when not supposed to.");
+						return false;
+					}
+					Professor currProf = nameToProf.get(s.getSchedule().get(i));
+					if (!currProf.getAvailability().get(i).equals(s.getName())) {
+						System.out.println("INVALID: Student " + s.getName() + " meeting with professor "
+								+ currProf.getName() + " at slot " + i + " but not vice versa.");
+						return false;
+					}
+					if (professorsMetWith.contains(currProf)) {
+						System.out.println("INVALID: Student " + s.getName() + " already meeting with professor "
+								+ currProf.getName() + ".");
+						return false;
+					}
+					professorsMetWith.add(currProf);
+				}
+			}
+		}
+
+		for (Professor p : professors) {
+			HashSet<Student> studentsMetWith = new HashSet<>();
+			ArrayList<String> originalAvailability = p.getOriginalAvailability();
+			for (int i = 0; i < originalAvailability.size(); i++) {
+				if (originalAvailability.get(i).equals("UNAVAILABLE")
+						&& !p.getAvailability().get(i).equals("UNAVAILABLE")) {
+					System.out.println("Invalid: Professor " + p.getName() + " scheduled at slot " + i
+							+ " but is unavailable then.");
+					return false;
+				} else if (!p.getAvailability().get(i).equals("AVAILABLE")) { // has student meeting
+					if (nameToStudent.get(p.getAvailability().get(i)) == null) {
+						System.out.println("Invalid: Not a valid student name for professor " + p.getName()
+								+ " at slot " + i + ".");
+						return false;
+					}
+					Student currStudent = nameToStudent.get(p.getAvailability().get(i));
+					if (studentsMetWith.contains(currStudent)) {
+						System.out.println("Invalid: Professor " + p.getName() + " already meeting with student "
+								+ currStudent.getName() + ".");
+						return false;
+					}
+					if (!currStudent.getSchedule().get(i).equals(p.getName())) {
+						System.out.println("Invalid: Professor " + p.getName() + " meeting with student "
+								+ currStudent.getName() + " at slot " + i + " but not vice versa.");
+						return false;
+					}
+					studentsMetWith.add(currStudent);
+				}
+
+			}
+		}
+		return true;
 	}
 
 	public HashMap<String, Student> getNameToStudent() {

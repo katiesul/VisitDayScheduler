@@ -1,4 +1,5 @@
 package scheduler;
+
 import java.io.*;
 import java.util.*;
 
@@ -30,60 +31,59 @@ public class InputProcessor {
 		profToAvailability = new HashMap<>();
 		nameToStudent = new HashMap<>();
 	}
-	
+
 	public HashMap<String, Student> getNameToStudent() {
 		return nameToStudent;
 	}
-	
+
 	public HashMap<String, Professor> getNameToProf() {
 		return nameToProf;
 	}
-	
+
 	public HashMap<Integer, String> getIndexToSlot() {
 		return indexToSlot;
 	}
-	
+
 	public ArrayList<Student> getStudents() {
 		return students;
 	}
-	
+
 	public ArrayList<Professor> getProfessors() {
 		return professors;
 	}
-	
+
 	public HashMap<String, Integer> getSlotToIndex() {
 		return slotToIndex;
 	}
-	
+
 	public HashSet<String> getProfNames() {
 		return profNames;
 	}
-	
+
 	public HashMap<String, ArrayList<String>> getProfToAssignments() {
 		return profToAssignments;
 	}
-	
+
 	public HashMap<String, ArrayList<Integer>> getProfToAvailability() {
 		return profToAvailability;
 	}
-	
+
 	public HashMap<String, ArrayList<Professor>> getStudentToPreferences() {
 		return studentToPreferences;
 	}
-	
+
 	public int getNumSlots() {
 		return numSlots;
 	}
-	
-	// TODO: implement students not having any preference 
+
+	// TODO: implement students not having any preference
 
 	/*
 	 * Used to actually process and store professor availability after the
 	 * preprocessing function has verified that the timeslots are valid and that
 	 * there are no duplicate names.
 	 */
-	public void processProfessorAvailability(File profName, int numSlots)
-			throws Exception {
+	public void processProfessorAvailability(File profName, int numSlots) throws Exception {
 		BufferedReader csvReader = null;
 		try {
 			csvReader = new BufferedReader(new FileReader(profName));
@@ -93,7 +93,7 @@ public class InputProcessor {
 		}
 
 		String currLine;
-		
+
 		csvReader.readLine(); // first line is just the column names
 		nameToProf = new HashMap<>();
 		professors = new ArrayList<>();
@@ -193,7 +193,8 @@ public class InputProcessor {
 		while (!usedSlots.contains(timeslots.get(timeslots.size() - 1))) {
 			timeslots.remove(timeslots.size() - 1);
 		}
-		// create a hashmap of timeslots to indices (and vice versa) to use for professor availability
+		// create a hashmap of timeslots to indices (and vice versa) to use for
+		// professor availability
 		for (int i = 0; i < timeslots.size(); i++) {
 			slotToIndex.put(timeslots.get(i), i);
 			indexToSlot.put(i, timeslots.get(i));
@@ -212,7 +213,7 @@ public class InputProcessor {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
+
 		// populate list of students to pass to Scheduler
 		students = new ArrayList<>();
 		for (Map.Entry<String, ArrayList<Professor>> entry : studentToPreferences.entrySet()) {
@@ -220,35 +221,118 @@ public class InputProcessor {
 			students.add(student);
 			nameToStudent.put(entry.getKey(), student);
 		}
-		
-/*		System.out.println("SLOTTOINDEX:");
-		for (Map.Entry<String, Integer> entry : slotToIndex.entrySet()) {
-			String key = entry.getKey();
-			Integer value = entry.getValue();
-			System.out.println(value + ": " + key);
-		}
 
-		for (Map.Entry<String, ArrayList<String>> entry : profToAssignments.entrySet()) {
-			String key = entry.getKey();
-			ArrayList<String> value = entry.getValue();
-			System.out.println("Professor Name: " + key);
-			for (String s : value) {
-				System.out.print(s + " ");
-			}
-			System.out.println();
-		}
-
-		for (Map.Entry<String, ArrayList<Professor>> entry : studentToPreferences.entrySet()) {
-			String key = entry.getKey();
-			ArrayList<Professor> value = entry.getValue();
-			System.out.println("Student Name: " + key);
-			for (Professor p : value) {
-				System.out.print(p.getName() + " ");
-			}
-			System.out.println();
-		}
-		*/
+		/*
+		 * System.out.println("SLOTTOINDEX:"); for (Map.Entry<String, Integer> entry :
+		 * slotToIndex.entrySet()) { String key = entry.getKey(); Integer value =
+		 * entry.getValue(); System.out.println(value + ": " + key); }
+		 * 
+		 * for (Map.Entry<String, ArrayList<String>> entry :
+		 * profToAssignments.entrySet()) { String key = entry.getKey();
+		 * ArrayList<String> value = entry.getValue();
+		 * System.out.println("Professor Name: " + key); for (String s : value) {
+		 * System.out.print(s + " "); } System.out.println(); }
+		 * 
+		 * for (Map.Entry<String, ArrayList<Professor>> entry :
+		 * studentToPreferences.entrySet()) { String key = entry.getKey();
+		 * ArrayList<Professor> value = entry.getValue();
+		 * System.out.println("Student Name: " + key); for (Professor p : value) {
+		 * System.out.print(p.getName() + " "); } System.out.println(); }
+		 */
 	}
+
+	public void processTourFiles(ArrayList<File> tourFiles) throws Exception {
+		int count = 1;
+		for (File currFile : tourFiles) {
+			BufferedReader tourFileReader = null;
+			try {
+				tourFileReader = new BufferedReader(new FileReader(currFile));
+			} catch (FileNotFoundException e1) {
+				System.out.println("Tour file #" + count + " not found.");
+				System.exit(1);
+			}
+
+			String tourName = tourFileReader.readLine(); // first line is name of the tour
+			String[] timeSlots = tourFileReader.readLine().split(","); // second line has timeslots
+
+			for (String str : timeSlots) {
+				str = str.replaceAll("\\s+", ""); // remove whitespace in timeslot string;
+				if (slotToIndex.get(str) == null) {
+					throw new Exception("Error: Could not find the timeslot \"" + str
+							+ "\". Double check the spelling/punctuation and make sure that the same timeslot is present in the "
+							+ "professor/student files.");
+				}
+			}
+
+			String currLine;
+
+			// get student names
+			ArrayList<Student> currStudents = new ArrayList<>();
+			while ((currLine = tourFileReader.readLine()) != null) {
+				if (nameToStudent.get(currLine) == null) {
+					throw new Exception("Error: Could not find student with the name \"" + currLine
+							+ "\". Double check that the student is present in the student preferences file and the names are "
+							+ "spelled the same in both.");
+				} else {
+					currStudents.add(nameToStudent.get(currLine));
+				}
+			}
+
+			for (Student s : currStudents) {
+				for (String str : timeSlots) {
+					// in the student's schedule, put the tour name to indicate they are unavailable
+					// then
+					s.setSchedule(slotToIndex.get(str), tourName);
+				}
+			}
+			tourFileReader.close();
+			count++;
+		}
+	}
+
+	public void processPreviousSchedule(File prevStudentFile, File prevProfFile) throws Exception {
+		BufferedReader prevStudentReader = null;
+		try {
+			prevStudentReader = new BufferedReader(new FileReader(prevStudentFile));
+		} catch (FileNotFoundException e1) {
+			System.out.println("Previous student file schedule not found.");
+			System.exit(1);
+		}
+
+		// verify the timeslots
+		String[] slots = prevStudentReader.readLine().split("\t"); // first line contains timeslots
+		for (String slot : slots) {
+			slot = slot.replaceAll("\\s+", ""); // remove whitespace in timeslot string
+			if (slotToIndex.get(slot) == null) {
+				throw new Exception("Could not find timeslot \"" + slot
+						+ "\" when processing the previous student schedule file. Double check the "
+						+ "spelling/punctuation and make sure it is the same timeslot present in the "
+						+ "student/professor information files.");
+			}
+		}
+
+		String currLine;
+		while ((currLine = prevStudentReader.readLine()) != null) {
+			String[] data = currLine.split("\t"); // program assumes the file is a .tsv file
+			String name = data[0];
+			if (nameToStudent.get(name) == null) {
+				throw new Exception("Could not find student \"" + name
+						+ "\" when processing the previous student file. Double check the spelling and ensure "
+						+ "this student is present in the student preferences file.");
+			}
+			// could either be tours or professors
+			for (int i = 1; i < data.length; i++) {
+				
+			}
+			
+		}
+		
+		// TODO: finish this method
+		// if we do this method we don't need to do createinitialschedule?
+		prevStudentReader.close();
+	}
+
+	// TODO: check we have closed all filereaders?
 
 	/*
 	 * Used to process student preferences. If duplicate student names are found or
@@ -257,8 +341,7 @@ public class InputProcessor {
 	 * will be kept. For example, if the student wrote (Prof 1, Prof 2, Prof 1), the
 	 * program will simplify this to (Prof 1, Prof 2).
 	 */
-	public void processStudents(File studentFile)
-			throws Exception {
+	public void processStudents(File studentFile) throws Exception {
 		BufferedReader csvReader = null;
 		try {
 			csvReader = new BufferedReader(new FileReader(studentFile));
@@ -283,10 +366,9 @@ public class InputProcessor {
 			studentNames.add(name);
 			Set<Professor> temp = new LinkedHashSet<>();
 			// the program assumes the five preferences are in columns 6 to 10
-		/*	for (String s : data) {
-				System.out.print(s + "|");
-			}
-			System.out.println(); */
+			/*
+			 * for (String s : data) { System.out.print(s + "|"); } System.out.println();
+			 */
 			for (int i = 5; i < data.length; i++) {
 				if (!data[i].isEmpty()) { // only add if not a blank preference
 					Professor p = nameToProf.get(data[i]);
@@ -302,9 +384,4 @@ public class InputProcessor {
 		}
 		csvReader.close();
 	}
-
-	public void processThreeInputs(File studentFile, File profFile, File schedule) throws Exception {
-		throw new Exception("Unimplemented");
-	}
-
 }

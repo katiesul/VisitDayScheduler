@@ -6,13 +6,17 @@ public class Student {
 	private int numPreferencesAssignedBACKUP;
 	private int numMeetingsAssignedBACKUP;
 	private ArrayList<Boolean> preferenceReceivedBACKUP;
+	private ArrayList<String> scheduleBACKUP;
 
 	private int numPreferencesAssigned;
 	private int numMeetingsAssigned;
 	private String name;
 	private ArrayList<Professor> preferences;
 	private ArrayList<Boolean> preferenceReceived;
-	private ArrayList<Professor> schedule;
+	private ArrayList<String> schedule;
+	
+	private ArrayList<String> originalAvailability;
+	
 
 	public Student(String name, ArrayList<Professor> preferences, int numSlots) {
 		this.name = name;
@@ -29,25 +33,34 @@ public class Student {
 		
 		schedule = new ArrayList<>();
 		for (int i = 0; i < numSlots; i++) {
-			schedule.add(null);
+			schedule.add("AVAILABLE");
+		}
+		
+		originalAvailability = new ArrayList<String>();
+		for (String str : schedule) {
+			originalAvailability.add(str);
 		}
 	}
 	
 	public boolean alreadyMeetingWith(Professor p) {
-		for (Professor prof : schedule) {
-			if (p.equals(prof)) {
+		for (String str : schedule) {
+			if (str.equals(p.getName())) {
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	public ArrayList<Professor> getSchedule() {
+	public ArrayList<String> getOriginalAvailability() {
+		return originalAvailability;
+	}
+	
+	public ArrayList<String> getSchedule() {
 		return schedule;
 	}
 	
 	public void addToSchedule(Professor prof, int index) {
-		schedule.set(index, prof);
+		schedule.set(index, prof.getName());
 	}
 	
 	public void removeFromSchedule(int index) {
@@ -96,6 +109,10 @@ public class Student {
 	public void setMeetingsAssigned(int num) {
 		numMeetingsAssigned = num;
 	}
+	
+	public void setSchedule(int index, String str) {
+		schedule.set(index, str);
+	}
 
 	public void setPreferenceReceived(int index, boolean bool) {
 		preferenceReceived.set(index, bool);
@@ -109,14 +126,14 @@ public class Student {
 		return name;
 	}
 	
-	public boolean scheduleEmpty() {
-		for (Professor p : schedule) {
-			if (p != null) {
-				return false;
-			}
-		}
-		return true;
-	}
+//	public boolean scheduleEmpty() {
+//		for (Professor p : schedule) {
+//			if (p != null) {
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
 
 	public ArrayList<Professor> getPreferences() {
 		return preferences;
