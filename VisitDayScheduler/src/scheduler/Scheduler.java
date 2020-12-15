@@ -21,7 +21,6 @@ import java.util.Scanner;
 //TODO: TOURS?
 public class Scheduler {
 
-	// TODO: test if you need to do \\ when doing the scanner input.
 	private static final int MAX_PROFESSOR_MEETINGS = 10;
 	private static final int MIN_STUDENT_MEETINGS = 5;
 	// TODO: PLAY WITH RNA_MAX AND CYCLES CONSTANTS BELOW.
@@ -30,18 +29,12 @@ public class Scheduler {
 	private static final int MEETING_WITH_SAME_PERSON_PENALTY = 5;
 	private static final int NOT_AVAILABLE_THEN_PENALTY = 10;
 	private static HashMap<Integer, String> indexToSlot;
-//	private static HashMap<String, Integer> slotToIndex;
-//	private static HashSet<String> profNames;
-//	private static HashMap<String, ArrayList<String>> profToAssignments;
-//	private static HashMap<String, ArrayList<Integer>> profToAvailability;
-//	private static HashMap<String, ArrayList<Professor>> studentToPreferences;
-//	private static HashMap<String, Integer> profNumAssignments;
-//	private static HashMap<String, ArrayList<Boolean>> studentAssigned;
 	private static ArrayList<Professor> professors;
 	private static ArrayList<Student> students;
 	private static int currSatisfaction;
 	private static int maxSatisfaction;
 	private static int numSlots;
+	private static boolean prevScheduleLoaded = false;
 	private static HashMap<String, Student> nameToStudent;
 	private static HashMap<String, Professor> nameToProf;
 
@@ -56,25 +49,19 @@ public class Scheduler {
 		// populate data structures
 		professors = processor.getProfessors();
 		students = processor.getStudents();
-
 		indexToSlot = processor.getIndexToSlot();
 		numSlots = processor.getNumSlots();
 		nameToStudent = processor.getNameToStudent();
 		nameToProf = processor.getNameToProf();
-//		profNames = processor.getProfNames();
-//		profToAssignments = processor.getProfToAssignments();
-//		profToAvailability = processor.getProfToAvailability();
-//		studentToPreferences = processor.getStudentToPreferences();
-//		profNumAssignments = new HashMap<>();
-//		studentAssigned = new HashMap<>();
 
-		createInitialSchedule();
+		if (!prevScheduleLoaded) {
+			createInitialSchedule();
+		}
+
 		calculateMaxSatisfaction();
 		calculateCurrentSatisfaction(0);
 
-		if (currSatisfaction == maxSatisfaction) {
-//			System.out.println("DONE.");
-		} else {
+		if (currSatisfaction != maxSatisfaction) {
 			int numCycles = 0;
 			while (numCycles < CYCLES) {
 				performRNA();
@@ -82,13 +69,11 @@ public class Scheduler {
 			}
 		}
 
-//		printSchedule();
 		outputResults();
 		System.out.println(currSatisfaction);
 	}
 
 	public static InputProcessor processPromptedInput() {
-		// TODO: check null?
 		File studentFile = null, profFile = null, prevStudentSchedule = null, prevProfessorSchedule = null;
 		ArrayList<File> tourFiles = new ArrayList<>();
 		Scanner scanner = new Scanner(System.in);
@@ -138,6 +123,7 @@ public class Scheduler {
 						"Error opening the previous professor schedule file. Please enter the full filepath and check spelling.");
 				System.exit(1); // terminate program
 			}
+			prevScheduleLoaded = true;
 			prevSchedule = true;
 		}
 
@@ -166,19 +152,21 @@ public class Scheduler {
 		// first process the professor and student information
 		processor.processTwoInputs(studentFile, profFile);
 
-		if (prevSchedule) {
-			try {
-				processor.processPreviousSchedule(prevStudentSchedule, prevProfessorSchedule);
-			} catch (Exception e) {
-				System.out.println("Error in processing previous schedule files.");
-				System.exit(1); // terminate program
-			}
-		}
+		// tour files need to be processed first in case there is a previous schedule
 		if (tourFiles.size() > 0) {
 			try {
 				processor.processTourFiles(tourFiles);
 			} catch (Exception e) {
 				System.out.println("Error in processing tour files.");
+				System.exit(1); // terminate program
+			}
+		}
+
+		if (prevSchedule) {
+			try {
+				processor.processPreviousSchedule(prevStudentSchedule, prevProfessorSchedule);
+			} catch (Exception e) {
+				System.out.println("Error in processing previous schedule files.");
 				System.exit(1); // terminate program
 			}
 		}
@@ -215,8 +203,6 @@ public class Scheduler {
 			System.out.println("Error opening the professors file. Please enter the full filepath and check spelling.");
 			System.exit(1); // terminate program
 		}
-
-		// TODO: see if we can output a colored cell instead of AVAILABLE
 
 		InputProcessor processor = new InputProcessor();
 
@@ -347,12 +333,8 @@ public class Scheduler {
 			e.printStackTrace();
 		}
 
-		// TODO: ask Tom if he randomly assigned people stuff if they didn't have many
-		// meetings. like weren't on prefs.
-
 		boolean atLeastOneStudentPrinted = false;
 
-		// TODO: print (1) (2) etc. for what # pref they didn't get
 		try {
 			writer = new PrintWriter(randomNum + "UnreceivedStudentPreferences.txt", "UTF-8");
 			for (Student s : students) {
@@ -456,6 +438,13 @@ public class Scheduler {
 					penalty += MEETING_WITH_SAME_PERSON_PENALTY;
 				}
 			}
+			// calculate if the students were not available at that time
+			if (randomStudent1 != null && !randomStudent1.getOriginalAvailability().get(student2RandomSlot).equals("AVAILABLE")) {
+				penalty += NOT_AVAILABLE_THEN_PENALTY;
+			}
+			if (randomStudent2 != null && !randomStudent2.getOriginalAvailability().get(student1RandomSlot).equals("AVAILABLE")) {
+				penalty += NOT_AVAILABLE_THEN_PENALTY;
+			}
 			// now calculate if the professors were not available at that time
 			if (prof1 != null) {
 				if (prof1.getOriginalAvailability().get(student2RandomSlot).equals("UNAVAILABLE")) {
@@ -521,11 +510,18 @@ public class Scheduler {
 					penalty += MEETING_WITH_SAME_PERSON_PENALTY;
 				}
 			}
-			// now calculate if the professors were not available at that time
-			if (randomProf1.getOriginalAvailability().get(prof2Slot).equals("UNAVAILABLE")) {
+			// calculate if the students were not available at that time
+			if (prof2OldStudent != null && !prof2OldStudent.getOriginalAvailability().get(prof1Slot).equals("AVAILABLE")) {
 				penalty += NOT_AVAILABLE_THEN_PENALTY;
 			}
-			if (randomProf2.getOriginalAvailability().get(prof1Slot).equals("UNAVAILABLE")) {
+			if (prof1OldStudent != null && !prof1OldStudent.getOriginalAvailability().get(prof2Slot).equals("AVAILABLE")) {
+				penalty += NOT_AVAILABLE_THEN_PENALTY;
+			}
+			// now calculate if the professors were not available at that time
+			if (randomProf1 != null && randomProf1.getOriginalAvailability().get(prof2Slot).equals("UNAVAILABLE")) {
+				penalty += NOT_AVAILABLE_THEN_PENALTY;
+			}
+			if (randomProf2 != null && randomProf2.getOriginalAvailability().get(prof1Slot).equals("UNAVAILABLE")) {
 				penalty += NOT_AVAILABLE_THEN_PENALTY;
 			}
 
@@ -555,8 +551,10 @@ public class Scheduler {
 			/***********************/
 
 			if (currSatisfaction < prevSatisfaction) {
-				// TODO: prevent division by 0
-				double percentDecrease = 1 - ((prevSatisfaction - currSatisfaction) / prevSatisfaction);
+				double percentDecrease = 0;
+				if (prevSatisfaction != 0) {
+					percentDecrease = 1 - ((prevSatisfaction - currSatisfaction) / prevSatisfaction);
+				}
 				double chanceAccepted = (1 - percentDecrease) / 2;
 				Random rand = new Random(System.currentTimeMillis());
 				int randomNum = rand.nextInt(99) + 0;

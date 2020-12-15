@@ -21,6 +21,7 @@ public class InputProcessor {
 	private HashMap<String, Student> nameToStudent;
 	private ArrayList<Professor> professors;
 	private HashMap<String, Professor> nameToProf;
+	private HashSet<String> tourNames;
 
 	public InputProcessor() {
 		slotToIndex = new HashMap<>();
@@ -242,6 +243,7 @@ public class InputProcessor {
 	}
 
 	public void processTourFiles(ArrayList<File> tourFiles) throws Exception {
+		tourNames = new HashSet<>();
 		int count = 1;
 		for (File currFile : tourFiles) {
 			BufferedReader tourFileReader = null;
@@ -253,6 +255,7 @@ public class InputProcessor {
 			}
 
 			String tourName = tourFileReader.readLine(); // first line is name of the tour
+			tourNames.add(tourName); // add to list of tour names
 			String[] timeSlots = tourFileReader.readLine().split(","); // second line has timeslots
 
 			for (String str : timeSlots) {
@@ -315,21 +318,91 @@ public class InputProcessor {
 		while ((currLine = prevStudentReader.readLine()) != null) {
 			String[] data = currLine.split("\t"); // program assumes the file is a .tsv file
 			String name = data[0];
-			if (nameToStudent.get(name) == null) {
+			Student currStudent = nameToStudent.get(name);
+			if (currStudent == null) {
 				throw new Exception("Could not find student \"" + name
 						+ "\" when processing the previous student file. Double check the spelling and ensure "
 						+ "this student is present in the student preferences file.");
 			}
 			// could either be tours or professors
 			for (int i = 1; i < data.length; i++) {
-				
+				if (!data[i].isEmpty()) {
+					if (nameToProf.get(data[i]) != null) { // check if it's a professor
+						Professor currentProf = nameToProf.get(data[i]);
+						// slots are 0-indexed so current slot is i-1
+						currentProf.setMeeting(i - 1, currStudent, currStudent.getNumPreference(currentProf));
+					} else { // check if it's a tour
+						if (!tourNames.contains(data[i])) {
+							throw new Exception("Student " + data[0] + " contained " + data[i] + " in their "
+									+ "schedule but this does not correspond to a tour name or a professor's "
+									+ "name. Ensure it is spelled correctly and if it is a professor, that it "
+									+ "matches the spelling in the professor availability file, or if it is a "
+									+ "tour, that you have included the tour file and the name matches.");
+						}
+						currStudent.setSchedule(i - 1, data[i]);
+					}
+				}
 			}
-			
+
 		}
-		
-		// TODO: finish this method
-		// if we do this method we don't need to do createinitialschedule?
+
 		prevStudentReader.close();
+
+		BufferedReader prevProfReader = null;
+		try {
+			prevProfReader = new BufferedReader(new FileReader(prevProfFile));
+		} catch (FileNotFoundException e1) {
+			System.out.println("Previous professor file schedule not found.");
+			System.exit(1);
+		}
+
+		// verify the timeslots
+		slots = prevProfReader.readLine().split("\t"); // first line contains timeslots
+		for (String slot : slots) {
+			slot = slot.replaceAll("\\s+", ""); // remove whitespace in timeslot string
+			if (slotToIndex.get(slot) == null) {
+				throw new Exception("Could not find timeslot \"" + slot
+						+ "\" when processing the previous professor schedule file. Double check the "
+						+ "spelling/punctuation and make sure it is the same timeslot present in the "
+						+ "student/professor information files.");
+			}
+		}
+
+		currLine = null;
+		while ((currLine = prevProfReader.readLine()) != null) {
+			String[] data = currLine.split("\t"); // program assumes the file is a .tsv file
+			String name = data[0];
+			Professor currProf = nameToProf.get(name);
+			if (currProf == null) {
+				throw new Exception("Could not find professor \"" + name
+						+ "\" when processing the previous professor file. Double check the spelling and ensure "
+						+ "this professor is present in the professor availability file.");
+			}
+
+			for (int i = 1; i < data.length; i++) {
+				if (!data[i].isEmpty()) {
+					Student currStudent = nameToStudent.get(data[i]);
+					if (currStudent != null) { // check if it's a student
+						// slots are 0-indexed so current slot is i-1
+						// verify that the student had this professor on their schedule
+						if (!currStudent.getSchedule().get(i - 1).equals(name)) {
+							throw new Exception("Error processing previous schedule: Professor " + name
+									+ " has student " + currStudent.getName() + " on their schedule at timeslot "
+									+ indexToSlot.get(i - 1)
+									+ " but the student does not have the professor scheduled then.");
+						}
+					} else { // not a valid student
+						throw new Exception("Student " + data[0] + " contained " + data[i] + " in their "
+								+ "schedule but this does not correspond to a tour name or a professor's "
+								+ "name. Ensure it is spelled correctly and if it is a professor, that it "
+								+ "matches the spelling in the professor availability file, or if it is a "
+								+ "tour, that you have included the tour file and the name matches.");
+					}
+				}
+			}
+		}
+
+		prevProfReader.close();
 	}
 
 	// TODO: check we have closed all filereaders?

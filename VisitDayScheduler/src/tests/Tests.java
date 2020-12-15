@@ -44,18 +44,6 @@ public class Tests {
 		}
 		return false;
 	}
-	
-//	@Test
-//	public void HURSTTEST() {
-//		// INSTRUCTIONS: In the two String variables below inside the quotes, put your entire file name
-//		// BUT REPLACE EVERY \ WITH TWO \\ 
-//		// For example, C:\\Users\\katie\\VisitDayScheduler\\VisitDayScheduler\\src\\STUDENTDATA.tsv
-//		// You can also view lines 24-28 above where I have declared variables like studentFileName if you want more examples
-//		String HURSTSTUDENTFILENAME = "";
-//		String HURSTPROFFILENAME = "";
-//		Scheduler scheduler = new Scheduler();
-//		scheduler.main(new String[] { HURSTSTUDENTFILENAME, HURSTPROFFILENAME });
-//	}
 
 	@Test
 	public void longExample() {
