@@ -27,6 +27,7 @@ public class Tests {
 	String realisticStudent = "C:\\Users\\katie\\VisitDayScheduler\\VisitDayScheduler\\src\\REALISTICSTUDENTDATA.tsv";
 	String realisticProf = "C:\\Users\\katie\\VisitDayScheduler\\VisitDayScheduler\\src\\REALISTICPROFDATA.tsv";
 
+	// helper method for tests
 	public boolean hasProf(ArrayList<Professor> profs, String name) {
 		for (int i = 0; i < profs.size(); i++) {
 			if (profs.get(i).getName().equals(name)) {
@@ -36,6 +37,7 @@ public class Tests {
 		return false;
 	}
 
+	// helper method for tests
 	public boolean hasStudent(ArrayList<Student> students, String name) {
 		for (int i = 0; i < students.size(); i++) {
 			if (students.get(i).getName().equals(name)) {
@@ -49,6 +51,7 @@ public class Tests {
 	public void longExample() {
 		Scheduler scheduler = new Scheduler();
 		scheduler.main(new String[] { longStudentFileName, profFileName });
+		scheduler.cleanUpFiles();
 		assertEquals(34, scheduler.getStudents().size());
 	}
 
@@ -56,12 +59,14 @@ public class Tests {
 	public void realisticExample() {
 		Scheduler scheduler = new Scheduler();
 		scheduler.main(new String[] { realisticStudent, realisticProf });
+		scheduler.cleanUpFiles();
 	}
 
 	@Test
 	public void simpleExample() {
 		Scheduler scheduler = new Scheduler();
 		scheduler.main(new String[] { studentFileName, profFileName });
+		scheduler.cleanUpFiles();
 		ArrayList<Student> students = scheduler.getStudents();
 		ArrayList<Professor> professors = scheduler.getProfessors();
 		assertEquals(hasProf(professors, "Adam Davis"), true);

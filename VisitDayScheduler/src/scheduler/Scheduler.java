@@ -37,6 +37,7 @@ public class Scheduler {
 	private static boolean prevScheduleLoaded = false;
 	private static HashMap<String, Student> nameToStudent;
 	private static HashMap<String, Professor> nameToProf;
+	private static ArrayList<String> outputFileNames;
 
 	public static void main(String[] args) {
 		InputProcessor processor;
@@ -275,11 +276,15 @@ public class Scheduler {
 
 	public static void outputResults() {
 		HashMap<Integer, ArrayList<Student>> studentToNumMeetings = new HashMap<>();
+		outputFileNames = new ArrayList<>();
 		Random rand = new Random(System.currentTimeMillis());
 		int randomNum = rand.nextInt(5000);
 		PrintWriter writer;
+		String filename;
 		try {
-			writer = new PrintWriter(randomNum + "StudentSchedule.tsv", "UTF-8");
+			filename = randomNum + "StudentSchedule.tsv";
+			outputFileNames.add(filename);
+			writer = new PrintWriter(filename, "UTF-8");
 			writer.print("\t");
 			for (int i = 0; i < numSlots; i++) {
 				writer.print(indexToSlot.get(i));
@@ -312,7 +317,9 @@ public class Scheduler {
 		}
 
 		try {
-			writer = new PrintWriter(randomNum + "ProfessorSchedule.tsv", "UTF-8");
+			filename = randomNum + "ProfessorSchedule.tsv";
+			outputFileNames.add(filename);
+			writer = new PrintWriter(filename, "UTF-8");
 			writer.print("\t");
 			for (int i = 0; i < numSlots; i++) {
 				writer.print(indexToSlot.get(i));
@@ -342,7 +349,9 @@ public class Scheduler {
 		boolean atLeastOneStudentPrinted = false;
 
 		try {
-			writer = new PrintWriter(randomNum + "UnreceivedStudentPreferences.txt", "UTF-8");
+			filename = randomNum + "UnreceivedStudentPreferences.txt";
+			outputFileNames.add(filename);
+			writer = new PrintWriter(filename, "UTF-8");
 			for (Student s : students) {
 				boolean flag = false;
 				int i = 0;
@@ -370,7 +379,9 @@ public class Scheduler {
 		}
 
 		try {
-			writer = new PrintWriter(randomNum + "StudentsAndNumberOfMeetings.txt", "UTF-8");
+			filename = randomNum + "StudentsAndNumberOfMeetings.txt";
+			outputFileNames.add(filename);
+			writer = new PrintWriter(filename, "UTF-8");
 			// sort by increasing # of meetings
 			ArrayList<Integer> nums = new ArrayList<>(studentToNumMeetings.keySet());
 			Collections.sort(nums);
@@ -659,6 +670,18 @@ public class Scheduler {
 		} else {
 			Random rand = new Random(System.currentTimeMillis());
 			return bothAreFree.get(rand.nextInt((bothAreFree.size() - 1 - 0) + 1) + 0);
+		}
+	}
+	
+	/*
+	 * Removes output files so they do not clog computer memory when testing. 
+	 */
+	public static void cleanUpFiles() {
+		for (String filename : outputFileNames) {
+		    File currFile = new File(filename); 
+		    if (!currFile.delete()) {
+		    	System.out.println("Problem deleting " + filename);
+		    }
 		}
 	}
 
