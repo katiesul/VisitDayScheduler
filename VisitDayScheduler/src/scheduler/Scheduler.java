@@ -18,11 +18,11 @@ import java.util.Scanner;
  * @author Katherine Sullivan
  */
 
-//TODO: TOURS?
 public class Scheduler {
 
 	private static final int MAX_PROFESSOR_MEETINGS = 10;
 	private static final int MIN_STUDENT_MEETINGS = 5;
+	private static final boolean ASSIGN_RANDOM_PROFESSORS = false;
 	// TODO: PLAY WITH RNA_MAX AND CYCLES CONSTANTS BELOW.
 	private static final int RNA_MAX = 25;
 	private static final int CYCLES = 25;
@@ -409,7 +409,8 @@ public class Scheduler {
 			System.out.println("Students and the preferences they did not receive written to " + randomNum
 					+ "UnreceivedStudentPreferences.txt");
 		}
-		System.out.println("Students sorted by number of meetings written to " + randomNum + "StudentsAndNumberOfMeetings.txt");
+		System.out.println(
+				"Students sorted by number of meetings written to " + randomNum + "StudentsAndNumberOfMeetings.txt");
 
 		System.out.println();
 	}
@@ -672,16 +673,16 @@ public class Scheduler {
 			return bothAreFree.get(rand.nextInt((bothAreFree.size() - 1 - 0) + 1) + 0);
 		}
 	}
-	
+
 	/*
-	 * Removes output files so they do not clog computer memory when testing. 
+	 * Removes output files so they do not clog computer memory when testing.
 	 */
 	public static void cleanUpFiles() {
 		for (String filename : outputFileNames) {
-		    File currFile = new File(filename); 
-		    if (!currFile.delete()) {
-		    	System.out.println("Problem deleting " + filename);
-		    }
+			File currFile = new File(filename);
+			if (!currFile.delete()) {
+				System.out.println("Problem deleting " + filename);
+			}
 		}
 	}
 
@@ -759,70 +760,73 @@ public class Scheduler {
 //			printSchedule();
 		}
 
-		/*******************************************************************/
-		/* ADD ADDITIONAL MEETINGS FOR STUDENTS BELOW MIN_STUDENT_MEETINGS */
-		/*******************************************************************/
-		ArrayList<Student> needMoreMeetings = new ArrayList<>();
-		for (Student s : students) {
-			if (s.getMeetingsAssigned() < MIN_STUDENT_MEETINGS) {
-				needMoreMeetings.add(s);
-			}
-		}
-		// only consider professors with free slots and # meetings assigned under
-		// MAX_PROFESSOR_MEETINGS
-		ArrayList<Professor> hasMoreSlots = new ArrayList<>();
-		for (Professor p : professors) {
-			if (p.getFreeSlots().size() > 0 && p.getNumMeetings() < MAX_PROFESSOR_MEETINGS) {
-				hasMoreSlots.add(p);
-			}
-		}
-
-		int k = 0;
-		while (needMoreMeetings.size() > 0 && hasMoreSlots.size() > 0 && k < 1000) {
-			// randomly select a student
-			Random rand = new Random(System.currentTimeMillis());
-			int randomStudent = rand.nextInt((needMoreMeetings.size() - 1) + 1) + 0;
-			Student s = needMoreMeetings.get(randomStudent);
-
-			// randomly select a professor and a slot
-			int randomProf = rand.nextInt((hasMoreSlots.size() - 1) + 1) + 0;
-			Professor p = hasMoreSlots.get(randomProf);
-			int randomSlot = rand.nextInt((p.getFreeSlots().size() - 1) + 1) + 0;
-
-			// schedule if the student is free and is not already meeting with the professor
-			if (s.getSchedule().get(randomSlot) == null && !s.alreadyMeetingWith(p)) {
-				p.setMeeting(p.getFreeSlots().get(randomSlot), s, s.getNumPreference(p));
-				// remove student if they have reached MIN_STUDENT_MEETINGS
-				if (s.getMeetingsAssigned() >= MIN_STUDENT_MEETINGS) {
-					needMoreMeetings.remove(s);
+		/******************************************************************************/
+		/* ADD ADDITIONAL MEETINGS FOR STUDENTS BELOW MIN_STUDENT_MEETINGS IF DESIRED */
+		/******************************************************************************/
+		if (ASSIGN_RANDOM_PROFESSORS) {
+			ArrayList<Student> needMoreMeetings = new ArrayList<>();
+			for (Student s : students) {
+				if (s.getMeetingsAssigned() < MIN_STUDENT_MEETINGS) {
+					needMoreMeetings.add(s);
 				}
-				// remove professor if they no longer have any free slots or have reached
-				// MAX_PROFESSOR_MEETINGS
-				if (p.getFreeSlots().size() == 0 || p.getNumMeetings() >= MAX_PROFESSOR_MEETINGS) {
-					hasMoreSlots.remove(randomProf);
+			}
+			// only consider professors with free slots and # meetings assigned under
+			// MAX_PROFESSOR_MEETINGS
+			ArrayList<Professor> hasMoreSlots = new ArrayList<>();
+			for (Professor p : professors) {
+				if (p.getFreeSlots().size() > 0 && p.getNumMeetings() < MAX_PROFESSOR_MEETINGS) {
+					hasMoreSlots.add(p);
 				}
-			} else {
-				// see if current professor should be removed from consideration
-				boolean remove = true;
-				for (Student stu : students) {
-					int i = 0;
-					for (String str : stu.getSchedule()) {
-						// see if it's possible for a student to have a meeting with the current prof
-						if (str.equals("AVAILABLE") && p.getAvailability().get(i).equals("AVAILABLE")
-								&& !stu.alreadyMeetingWith(p)) {
-							remove = false;
-							break;
+			}
+
+			int k = 0;
+			while (needMoreMeetings.size() > 0 && hasMoreSlots.size() > 0 && k < 1000) {
+				// randomly select a student
+				Random rand = new Random(System.currentTimeMillis());
+				int randomStudent = rand.nextInt((needMoreMeetings.size() - 1) + 1) + 0;
+				Student s = needMoreMeetings.get(randomStudent);
+
+				// randomly select a professor and a slot
+				int randomProf = rand.nextInt((hasMoreSlots.size() - 1) + 1) + 0;
+				Professor p = hasMoreSlots.get(randomProf);
+				int randomSlot = rand.nextInt((p.getFreeSlots().size() - 1) + 1) + 0;
+
+				// schedule if the student is free and is not already meeting with the professor
+				if (s.getSchedule().get(randomSlot) == null && !s.alreadyMeetingWith(p)) {
+					p.setMeeting(p.getFreeSlots().get(randomSlot), s, s.getNumPreference(p));
+					// remove student if they have reached MIN_STUDENT_MEETINGS
+					if (s.getMeetingsAssigned() >= MIN_STUDENT_MEETINGS) {
+						needMoreMeetings.remove(s);
+					}
+					// remove professor if they no longer have any free slots or have reached
+					// MAX_PROFESSOR_MEETINGS
+					if (p.getFreeSlots().size() == 0 || p.getNumMeetings() >= MAX_PROFESSOR_MEETINGS) {
+						hasMoreSlots.remove(randomProf);
+					}
+				} else {
+					// see if current professor should be removed from consideration
+					boolean remove = true;
+					for (Student stu : students) {
+						int i = 0;
+						for (String str : stu.getSchedule()) {
+							// see if it's possible for a student to have a meeting with the current prof
+							if (str.equals("AVAILABLE") && p.getAvailability().get(i).equals("AVAILABLE")
+									&& !stu.alreadyMeetingWith(p)) {
+								remove = false;
+								break;
+							}
+							i++;
 						}
-						i++;
+					}
+					if (remove) {
+						hasMoreSlots.remove(randomProf);
 					}
 				}
-				if (remove) {
-					hasMoreSlots.remove(randomProf);
-				}
-			}
 
-			k++;
+				k++;
+			}
 		}
+
 	}
 
 	// TODO: fix
