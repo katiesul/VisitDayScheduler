@@ -274,6 +274,7 @@ public class Scheduler {
 	}
 
 	public static void outputResults() {
+		HashMap<Integer, ArrayList<Student>> studentToNumMeetings = new HashMap<>();
 		Random rand = new Random(System.currentTimeMillis());
 		int randomNum = rand.nextInt(5000);
 		PrintWriter writer;
@@ -288,6 +289,11 @@ public class Scheduler {
 			}
 			writer.println();
 			for (Student s : students) {
+				// we want to be able to sort students by # of meetings in an output file
+				if (studentToNumMeetings.get(s.getMeetingsAssigned()) == null) {
+					studentToNumMeetings.put(s.getMeetingsAssigned(), new ArrayList<Student>());
+				}
+				studentToNumMeetings.get(s.getMeetingsAssigned()).add(s);
 				writer.print(s.getName());
 				for (String str : s.getSchedule()) {
 					if (str != null) {
@@ -359,7 +365,30 @@ public class Scheduler {
 			}
 			writer.close();
 		} catch (Exception e) {
-			System.out.println("UnreceivedStudentPreferences.txt");
+			System.out.println("Error creating UnreceivedStudentPreferences.txt");
+			e.printStackTrace();
+		}
+
+		try {
+			writer = new PrintWriter(randomNum + "StudentsAndNumberOfMeetings.txt", "UTF-8");
+			// sort by increasing # of meetings
+			ArrayList<Integer> nums = new ArrayList<>(studentToNumMeetings.keySet());
+			Collections.sort(nums);
+			writer.write("[Number of Meetings]: [Names of Students]\n\n");
+			for (Integer currNum : nums) {
+				writer.print(currNum + ": ");
+				ArrayList<Student> currList = studentToNumMeetings.get(currNum);
+				for (int j = 0; j < currList.size(); j++) {
+					writer.print(currList.get(j).getName());
+					if (j != currList.size() - 1) {
+						writer.print(", ");
+					}
+				}
+				writer.print("\n\n");
+			}
+			writer.close();
+		} catch (Exception e) {
+			System.out.println("Error creating StudentsAndNumberOfMeetings.txt");
 			e.printStackTrace();
 		}
 
@@ -369,6 +398,7 @@ public class Scheduler {
 			System.out.println("Students and the preferences they did not receive written to " + randomNum
 					+ "UnreceivedStudentPreferences.txt");
 		}
+		System.out.println("Students sorted by number of meetings written to " + randomNum + "StudentsAndNumberOfMeetings.txt");
 
 		System.out.println();
 	}
@@ -439,10 +469,12 @@ public class Scheduler {
 				}
 			}
 			// calculate if the students were not available at that time
-			if (randomStudent1 != null && !randomStudent1.getOriginalAvailability().get(student2RandomSlot).equals("AVAILABLE")) {
+			if (randomStudent1 != null
+					&& !randomStudent1.getOriginalAvailability().get(student2RandomSlot).equals("AVAILABLE")) {
 				penalty += NOT_AVAILABLE_THEN_PENALTY;
 			}
-			if (randomStudent2 != null && !randomStudent2.getOriginalAvailability().get(student1RandomSlot).equals("AVAILABLE")) {
+			if (randomStudent2 != null
+					&& !randomStudent2.getOriginalAvailability().get(student1RandomSlot).equals("AVAILABLE")) {
 				penalty += NOT_AVAILABLE_THEN_PENALTY;
 			}
 			// now calculate if the professors were not available at that time
@@ -511,10 +543,12 @@ public class Scheduler {
 				}
 			}
 			// calculate if the students were not available at that time
-			if (prof2OldStudent != null && !prof2OldStudent.getOriginalAvailability().get(prof1Slot).equals("AVAILABLE")) {
+			if (prof2OldStudent != null
+					&& !prof2OldStudent.getOriginalAvailability().get(prof1Slot).equals("AVAILABLE")) {
 				penalty += NOT_AVAILABLE_THEN_PENALTY;
 			}
-			if (prof1OldStudent != null && !prof1OldStudent.getOriginalAvailability().get(prof2Slot).equals("AVAILABLE")) {
+			if (prof1OldStudent != null
+					&& !prof1OldStudent.getOriginalAvailability().get(prof2Slot).equals("AVAILABLE")) {
 				penalty += NOT_AVAILABLE_THEN_PENALTY;
 			}
 			// now calculate if the professors were not available at that time
