@@ -26,6 +26,7 @@ public class Tests {
 	String profFileName = "C:\\Users\\katie\\VisitDayScheduler\\VisitDayScheduler\\src\\PROFDATA.tsv";
 	String realisticStudent = "C:\\Users\\katie\\VisitDayScheduler\\VisitDayScheduler\\src\\REALISTICSTUDENTDATA.tsv";
 	String realisticProf = "C:\\Users\\katie\\VisitDayScheduler\\VisitDayScheduler\\src\\REALISTICPROFDATA.tsv";
+	String studentEmptyPrefs = "C:/Users/katie/VisitDayScheduler/VisitDayScheduler/src/STUDENTDATANOPREFS.tsv";
 
 	// helper method for tests
 	public boolean hasProf(ArrayList<Professor> profs, String name) {
@@ -53,6 +54,13 @@ public class Tests {
 		scheduler.main(new String[] { longStudentFileName, profFileName });
 		scheduler.cleanUpFiles();
 		assertEquals(34, scheduler.getStudents().size());
+	}
+	
+	@Test
+	public void testEmptyPrefs() {
+		Scheduler scheduler = new Scheduler();
+		scheduler.main(new String[] { studentEmptyPrefs, realisticProf });
+		scheduler.cleanUpFiles();
 	}
 
 	@Test
