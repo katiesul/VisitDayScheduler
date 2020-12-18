@@ -83,6 +83,10 @@ public class Professor {
 			student.setMeetingsAssigned(student.getMeetingsAssigned() + 1); // increment student's number of meetings
 		}
 	}
+	
+	public void setSchedule(int index, String str) {
+		availability.set(index, str);
+	}
 
 	// INDEX IS ACTUAL INDEX OUT OF ALL INDICES
 	public void removeMeeting(int index, Student student) {

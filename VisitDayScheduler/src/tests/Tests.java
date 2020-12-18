@@ -4,20 +4,12 @@ import static org.junit.Assert.*;
 import junit.framework.TestCase;
 import scheduler.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.NoSuchElementException;
 import java.util.Random;
-import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 
 import org.junit.Test;
 
@@ -122,7 +114,6 @@ public class Tests {
 			String profFilename = "", studentFilename = "";
 			try {
 				profFilename = "C:/Users/katie/VisitDayScheduler/VisitDayScheduler/src/TESTINGPURPOSESPROFDATA.tsv";
-				File myObj = new File(profFilename);
 				writer = new PrintWriter(profFilename, "UTF-8");
 				writer.write("Timestamp\tFull Name\tTimeslots"); // write first line
 				for (int j = 0; j < numProfs; j++) {
@@ -136,7 +127,6 @@ public class Tests {
 			// next create student file
 			try {
 				studentFilename = "C:/Users/katie/VisitDayScheduler/VisitDayScheduler/src/TESTINGPURPOSESSTUDENTDATA.tsv";
-				File myObj = new File(studentFilename);
 				writer = new PrintWriter(studentFilename, "UTF-8");
 				// write first line
 				writer.write(
@@ -155,6 +145,7 @@ public class Tests {
 			Scheduler scheduler = new Scheduler();
 			scheduler.main(new String[] { studentFilename, profFilename });
 			scheduler.cleanUpFiles();
+//			assertEquals(true, scheduler.verifySchedule());
 		}
 	}
 

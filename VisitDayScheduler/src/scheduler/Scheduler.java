@@ -1,10 +1,7 @@
 package scheduler;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,6 +67,7 @@ public class Scheduler {
 			}
 		}
 
+		cleanUpSchedule();
 		outputResults();
 		System.out.println(currSatisfaction);
 	}
@@ -147,6 +145,8 @@ public class Scheduler {
 				count++;
 			}
 		}
+		
+		scanner.close();
 
 		InputProcessor processor = new InputProcessor();
 
@@ -301,10 +301,10 @@ public class Scheduler {
 				studentToNumMeetings.get(s.getMeetingsAssigned()).add(s);
 				writer.print(s.getName());
 				for (String str : s.getSchedule()) {
-					if (str != null) {
+					if (!str.equals("AVAILABLE")) {
 						writer.print("\t" + str);
 					} else {
-						writer.print("\t----------");
+						writer.print("\t");
 					}
 				}
 				writer.print("\t");
@@ -827,6 +827,53 @@ public class Scheduler {
 			}
 		}
 
+	}
+
+	public static void cleanUpSchedule() {
+		for (Student s : students) {
+			HashSet<Professor> professorsMetWith = new HashSet<>();
+			ArrayList<String> originalAvailability = s.getOriginalAvailability();
+			for (int i = 0; i < originalAvailability.size(); i++) {
+				if (!originalAvailability.get(i).equals("AVAILABLE")) { // tour
+					if (!s.getSchedule().get(i).equals(originalAvailability.get(i))) {
+						// unschedule a potential meeting they have; give them their tour
+						if (nameToProf.get(s.getSchedule().get(i)) != null) {
+							nameToProf.get(s.getSchedule().get(i)).removeMeeting(i, s);
+						}
+						s.setSchedule(i, originalAvailability.get(i));
+					}
+				} else if (!s.getSchedule().get(i).equals("AVAILABLE")) { // student scheduled with a professor
+					if (nameToProf.get(s.getSchedule().get(i)) != null) {
+						Professor currProf = nameToProf.get(s.getSchedule().get(i));
+						if (professorsMetWith.contains(currProf)) { // duplicate meeting; remove
+							currProf.removeMeeting(i, s);
+						}
+						professorsMetWith.add(currProf);
+					}
+				}
+			}
+		}
+
+		for (Professor p : professors) {
+			HashSet<Student> studentsMetWith = new HashSet<>();
+			ArrayList<String> originalAvailability = p.getOriginalAvailability();
+			for (int i = 0; i < originalAvailability.size(); i++) {
+				if (originalAvailability.get(i).equals("UNAVAILABLE")
+						&& !p.getAvailability().get(i).equals("UNAVAILABLE")) { // professor unavailable
+					p.removeMeeting(i, nameToStudent.get(p.getAvailability().get(i)));
+					p.setSchedule(i, "UNAVAILABLE");
+				} else if (!p.getAvailability().get(i).equals("AVAILABLE")) { // has student meeting
+					if (nameToStudent.get(p.getAvailability().get(i)) == null) {
+						Student currStudent = nameToStudent.get(p.getAvailability().get(i));
+						if (studentsMetWith.contains(currStudent)) { // duplicate meeting; remove
+							p.removeMeeting(i, currStudent);
+						}
+						studentsMetWith.add(currStudent);
+					}
+
+				}
+			}
+		}
 	}
 
 	// TODO: fix

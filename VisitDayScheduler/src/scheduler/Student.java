@@ -25,6 +25,7 @@ public class Student {
 		numMeetingsAssigned = 0;
 		preferenceReceived = new ArrayList<>();
 		preferenceReceivedBACKUP = new ArrayList<>();
+		scheduleBACKUP = new ArrayList<>();
 		
 		int size = preferences.size();
 		for (int i = 0; i < size; i++) {
@@ -83,8 +84,12 @@ public class Student {
 		numPreferencesAssigned = numPreferencesAssignedBACKUP;
 		numMeetingsAssigned = numMeetingsAssignedBACKUP;
 		preferenceReceived.clear();
+		schedule.clear();
 		for (Boolean bool : preferenceReceivedBACKUP) {
 			preferenceReceived.add(bool);
+		}
+		for (String str : scheduleBACKUP) {
+			schedule.add(str);
 		}
 	}
 
@@ -97,8 +102,12 @@ public class Student {
 		numPreferencesAssignedBACKUP = numPreferencesAssigned;
 		numMeetingsAssignedBACKUP = numMeetingsAssigned;
 		preferenceReceivedBACKUP.clear();
+		scheduleBACKUP.clear();
 		for (Boolean bool : preferenceReceived) {
 			preferenceReceivedBACKUP.add(bool);
+		}
+		for (String str : schedule) {
+			scheduleBACKUP.add(str);
 		}
 	}
 
