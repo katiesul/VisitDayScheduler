@@ -145,7 +145,7 @@ public class Tests {
 			Scheduler scheduler = new Scheduler();
 			scheduler.main(new String[] { studentFilename, profFilename });
 			scheduler.cleanUpFiles();
-//			assertEquals(true, scheduler.verifySchedule());
+			assertEquals(true, scheduler.verifySchedule());
 		}
 	}
 
@@ -153,6 +153,7 @@ public class Tests {
 	public void longExample() {
 		Scheduler scheduler = new Scheduler();
 		scheduler.main(new String[] { longStudentFileName, profFileName });
+		assertEquals(true, scheduler.verifySchedule());
 		scheduler.cleanUpFiles();
 		assertEquals(34, scheduler.getStudents().size());
 	}
@@ -161,6 +162,7 @@ public class Tests {
 	public void testEmptyPrefs() {
 		Scheduler scheduler = new Scheduler();
 		scheduler.main(new String[] { studentEmptyPrefs, realisticProf });
+		assertEquals(true, scheduler.verifySchedule());
 		scheduler.cleanUpFiles();
 	}
 
@@ -168,6 +170,7 @@ public class Tests {
 	public void realisticExample() {
 		Scheduler scheduler = new Scheduler();
 		scheduler.main(new String[] { realisticStudent, realisticProf });
+		assertEquals(true, scheduler.verifySchedule());
 		scheduler.cleanUpFiles();
 	}
 
@@ -215,6 +218,7 @@ public class Tests {
 		assertEquals(list.get(2).getName(), "Amy Brown");
 		assertEquals(list.get(3).getName(), "Adam Davis");
 		assertEquals(list.get(4).getName(), "Timothy Baker");
+		assertEquals(true, scheduler.verifySchedule());
 	}
 
 }

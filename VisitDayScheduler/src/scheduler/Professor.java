@@ -85,6 +85,14 @@ public class Professor {
 	}
 	
 	public void setSchedule(int index, String str) {
+//		if (str.equals("UNAVAILABLE") && !originalAvailability.get(index).equals("UNAVAILABLE")) {
+//			try {
+//				throw new Exception("WRONG");
+//			} catch (Exception e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
 		availability.set(index, str);
 	}
 

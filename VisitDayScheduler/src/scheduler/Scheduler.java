@@ -145,7 +145,7 @@ public class Scheduler {
 				count++;
 			}
 		}
-		
+
 		scanner.close();
 
 		InputProcessor processor = new InputProcessor();
@@ -892,8 +892,7 @@ public class Scheduler {
 						System.out.println("INVALID: Student " + s.getName() + " not scheduled to take their tour.");
 						return false;
 					}
-				} else if (!s.getSchedule().get(i).equals("AVAILABLE")) { // student should be scheduled with a
-																			// professor
+				} else if (!s.getSchedule().get(i).equals("AVAILABLE")) { // should be scheduled with a professor
 					if (nameToProf.get(s.getSchedule().get(i)) == null) {
 						System.out.println("INVALID: Invalid professor name or given a tour when not supposed to.");
 						return false;
@@ -923,7 +922,8 @@ public class Scheduler {
 					System.out.println("Invalid: Professor " + p.getName() + " scheduled at slot " + i
 							+ " but is unavailable then.");
 					return false;
-				} else if (!p.getAvailability().get(i).equals("AVAILABLE")) { // has student meeting
+				} else if (originalAvailability.get(i).equals("AVAILABLE")
+						&& !p.getAvailability().get(i).equals("AVAILABLE")) { // has student meeting
 					if (nameToStudent.get(p.getAvailability().get(i)) == null) {
 						System.out.println("Invalid: Not a valid student name for professor " + p.getName()
 								+ " at slot " + i + ".");
